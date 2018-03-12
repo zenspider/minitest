@@ -681,7 +681,7 @@ class TestMinitestStub < Minitest::Test
   end
 
   def assert_stub val_or_callable
-    @assertion_count += 1
+    @assertion_count += 2
 
     t = Time.now.to_i
 
@@ -693,7 +693,7 @@ class TestMinitestStub < Minitest::Test
   end
 
   def test_stub_private_module_method
-    @assertion_count += 1
+    @assertion_count += 2
 
     t0 = Time.now
 
@@ -735,7 +735,7 @@ class TestMinitestStub < Minitest::Test
   end
 
   def test_stub_block_args
-    @assertion_count += 1
+    @assertion_count += 2
 
     t = Time.now.to_i
 
