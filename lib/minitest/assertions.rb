@@ -301,6 +301,7 @@ module Minitest
 
     def assert_operator o1, op, o2 = UNDEFINED, msg = nil
       return assert_predicate o1, op, msg if UNDEFINED == o2
+      assert_respond_to o1, op
       msg = message(msg) { "Expected #{mu_pp o1} to be #{op} #{mu_pp o2}" }
       assert o1.__send__(op, o2), msg
     end
@@ -382,6 +383,7 @@ module Minitest
     #   str.must_be :empty?
 
     def assert_predicate o1, op, msg = nil
+      assert_respond_to o1, op
       msg = message(msg) { "Expected #{mu_pp o1} to be #{op}" }
       assert o1.__send__(op), msg
     end
@@ -753,6 +755,7 @@ module Minitest
 
     def refute_operator o1, op, o2 = UNDEFINED, msg = nil
       return refute_predicate o1, op, msg if UNDEFINED == o2
+      assert_respond_to o1, op
       msg = message(msg) { "Expected #{mu_pp o1} to not be #{op} #{mu_pp o2}" }
       refute o1.__send__(op, o2), msg
     end
@@ -775,6 +778,7 @@ module Minitest
     #   str.wont_be :empty?
 
     def refute_predicate o1, op, msg = nil
+      assert_respond_to o1, op
       msg = message(msg) { "Expected #{mu_pp o1} to not be #{op}" }
       refute o1.__send__(op), msg
     end

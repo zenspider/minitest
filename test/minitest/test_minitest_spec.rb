@@ -236,6 +236,8 @@ describe Minitest::Spec do
   end
 
   it "needs to verify binary messages" do
+    @assertion_count += 3
+
     assert_success _(42).wont_be(:<, 24)
 
     assert_triggered "Expected 24 to not be < 42." do
@@ -656,7 +658,7 @@ describe Minitest::Spec do
   end
 
   it "needs to verify using any (negative) predicate" do
-    @assertion_count -= 1 # doesn"t take a message
+    @assertion_count += 1
 
     assert_success _("blah").wont_be(:empty?)
 
@@ -666,7 +668,7 @@ describe Minitest::Spec do
   end
 
   it "needs to verify using any binary operator" do
-    @assertion_count -= 1 # no msg
+    @assertion_count += 1
 
     assert_success _(41).must_be(:<, 42)
 
@@ -676,7 +678,7 @@ describe Minitest::Spec do
   end
 
   it "needs to verify using any predicate" do
-    @assertion_count -= 1 # no msg
+    @assertion_count += 1
 
     assert_success _("").must_be(:empty?)
 
