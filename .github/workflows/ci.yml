@@ -5,6 +5,7 @@ name: CI
 # https://github.com/ruby/setup-ruby
 # https://github.com/actions/virtual-environments#available-environments
 # https://github.com/ruby/setup-ruby/blob/master/README.md#supported-platforms
+# https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
 
 'on': [push, pull_request, workflow_dispatch]
 
@@ -59,12 +60,17 @@ jobs:
 
   isolated:
     name: >-
-      test:isolated ${{ matrix.os }} ${{ matrix.ruby }}
+      test:isolated
+    env:
+      TESTOPTS: -v
 
     runs-on: ubuntu-latest
     if: |
       !(   contains(github.event.pull_request.title,  '[ci skip]')
         || contains(github.event.pull_request.title,  '[skip ci]'))
+    strategy:
+      fail-fast: false
+
     steps:
       - name: repo checkout
         uses: actions/checkout@v4
@@ -80,5 +86,5 @@ jobs:
 
       - name: rake test:isolated
         run: |
-          rake test:isolated RUBYOPT="${{ matrix.rubyopt }}"
+          rake test:isolated RUBYOPT=--enable-frozen-string-literal
         timeout-minutes: 3
