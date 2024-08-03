@@ -213,17 +213,10 @@ module Minitest
 
     def assert_equal exp, act, msg = nil
       msg = message(msg, E) { diff exp, act }
-      result = assert exp == act, msg
 
-      if nil == exp then
-        if Minitest::VERSION >= "6" then
-          refute_nil exp, "Use assert_nil if expecting nil."
-        else
-          warn "DEPRECATED: Use assert_nil if expecting nil from #{_where}. This will fail in Minitest 6."
-        end
-      end
+      refute_nil exp, message { "Use assert_nil if expecting nil" } if exp.nil? # HACK
 
-      result
+      assert exp == act, msg
     end
 
     ##
