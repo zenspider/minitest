@@ -234,5 +234,3 @@ module Minitest
     extend Guard
   end # Test
 end
-
-require "minitest/unit" if ENV["MT_COMPAT"] # compatibility layer only
