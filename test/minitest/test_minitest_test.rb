@@ -1060,24 +1060,6 @@ class TestMinitestGuard < Minitest::Test
     assert self.jruby? "java"
   end
 
-  def test_rubinius_eh
-    assert_deprecation do
-      assert self.class.rubinius? "rbx"
-    end
-    assert_deprecation do
-      assert self.rubinius? "rbx"
-    end
-  end
-
-  def test_maglev_eh
-    assert_deprecation do
-      assert self.class.maglev? "maglev"
-    end
-    assert_deprecation do
-      assert self.maglev? "maglev"
-    end
-  end
-
   def test_osx_eh
     assert self.class.osx? "darwin"
     assert self.osx? "darwin"
