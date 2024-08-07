@@ -608,7 +608,6 @@ module Minitest
     def message msg = nil, ending = nil, &default
       return msg if Proc === msg
       proc {
-        msg = msg.call.chomp(".") if Proc === msg
         custom_message = "#{msg}.\n" unless msg.nil? or msg.to_s.empty?
         "#{custom_message}#{default.call}#{ending || "."}"
       }

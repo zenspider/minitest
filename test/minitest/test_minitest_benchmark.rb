@@ -127,11 +127,67 @@ class TestMinitestBenchmark < Minitest::Test
     assert_in_delta exp_a, a
     assert_in_delta exp_b, b
   end
+
+  def test_validation_for_fit
+    skip "not yet"
+  end
+
+  def test_assert_performance
+    skip "not yet"
+  end
+
+  def test_assert_performance_constant
+    skip "not yet"
+  end
+
+  def test_assert_performance_exponential
+    skip "not yet"
+  end
+
+  def test_assert_performance_logarithmic
+    skip "not yet"
+  end
+
+  def test_assert_performance_linear
+    skip "not yet"
+  end
+
+  def test_assert_performance_power
+    skip "not yet"
+  end
 end
 
-describe "my class Bench" do
+describe "my class Bench" do # FIX: these don't actually run?!?
   klass = self
   it "should provide bench methods" do
     klass.must_respond_to :bench
+  end
+
+  def test_bench
+    skip "not yet"
+  end
+
+  def test_bench_range
+    skip "not yet"
+  end
+
+  def test_bench_performance_linear
+    skip "not yet"
+  end
+
+  def test_bench_performance_constant
+    skip "not yet"
+  end
+
+  def test_bench_performance_exponential
+    skip "not yet"
+  end
+
+  def test_bench_performance_logarithmic
+    skip "not yet"
+  end
+
+  def test_bench_performance_power
+    skip "not yet"
   end
 end

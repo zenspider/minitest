@@ -9,7 +9,7 @@ require_relative "minitest/compress"
 # :include: README.rdoc
 
 module Minitest
-  VERSION = "5.24.1" # :nodoc:
+  VERSION = "6.0.0.a1" # :nodoc:
 
   @@installed_at_exit ||= false
   @@after_run = []
@@ -174,7 +174,7 @@ module Minitest
       end
 
       opts.on "-n", "--name PATTERN", "Filter run on /regexp/ or string." do |a|
-        options[:filter] = a
+        options[:filter] = a # TODO: rename include?
       end
 
       opts.on "-e", "--exclude PATTERN", "Exclude /regexp/ or string from run." do |a|
@@ -436,7 +436,7 @@ module Minitest
     # Defines the order to run tests (:random by default). Override
     # this or use a convenience method to change it for your tests.
 
-    def self.test_order
+    def self.test_order # TODO: rename to run_order
       :random
     end
 
@@ -550,7 +550,7 @@ module Minitest
     def skipped?
       raise NotImplementedError, "subclass responsibility"
     end
-  end
+  end # Runnable
 
   ##
   # Shared code for anything that can get passed to a Reporter. See

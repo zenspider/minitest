@@ -3,12 +3,14 @@ History.rdoc
 Manifest.txt
 README.rdoc
 Rakefile
+bin/minitest
 design_rationale.rb
 lib/hoe/minitest.rb
 lib/minitest.rb
 lib/minitest/assertions.rb
 lib/minitest/autorun.rb
 lib/minitest/benchmark.rb
+lib/minitest/complete.rb
 lib/minitest/compress.rb
 lib/minitest/error_on_warning.rb
 lib/minitest/expectations.rb
@@ -20,9 +22,10 @@ lib/minitest/pride.rb
 lib/minitest/pride_plugin.rb
 lib/minitest/reporter.rb
 lib/minitest/spec.rb
+lib/minitest/sprint.rb
+lib/minitest/sprint_plugin.rb
 lib/minitest/test.rb
 lib/minitest/test_task.rb
-lib/minitest/unit.rb
 test/minitest/metametameta.rb
 test/minitest/test_minitest_assertions.rb
 test/minitest/test_minitest_benchmark.rb
