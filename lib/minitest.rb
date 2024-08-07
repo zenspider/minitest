@@ -324,7 +324,7 @@ module Minitest
 
   def self.__run reporter, options
     suites = Runnable.runnables.shuffle
-    parallel, serial = suites.partition { |s| s.test_order == :parallel }
+    parallel, serial = suites.partition { |s| s.run_order == :parallel }
 
     # If we run the parallel tests before the serial tests, the parallel tests
     # could run in parallel with the serial tests. This would be bad because
@@ -451,10 +451,26 @@ module Minitest
 
     ##
     # Defines the order to run tests (:random by default). Override
-    # this or use a convenience method to change it for your tests.
+    # this or use a convenience method to change it for your runs.
+
+    def self.run_order
+      :random
+    end
+
+    @@test_order_warned = false
+
+    ##
+    # DEPRECATED: use run_order.
 
     def self.test_order
-      :random
+      unless @@test_order_warned then
+        where = Minitest.filter_backtrace(caller).first
+        where = where.split(":in ", 2).first # clean up noise
+        warn "DEPRECATED: `test_order` called from #{where}. Use run_order. This will fail in Minitest 6.", category: :deprecated
+        @@test_order_warned = true
+      end
+
+      run_order
     end
 
     def self.with_info_handler reporter, &block # :nodoc:
