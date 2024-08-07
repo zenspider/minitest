@@ -186,9 +186,8 @@ module Minitest
     # Fails unless +obj+ is empty.
 
     def assert_empty obj, msg = nil
-      msg = message(msg) { "Expected #{mu_pp obj} to be empty" }
-      assert_respond_to obj, :empty?
-      assert obj.empty?, msg
+      msg = message(msg) { "Expected #{mu_pp(obj)} to be empty" } # TODO: remove
+      assert_predicate obj, :empty?, msg
     end
 
     def _where # :nodoc:
@@ -248,8 +247,7 @@ module Minitest
       msg = message(msg) {
         "Expected #{mu_pp collection} to include #{mu_pp obj}"
       }
-      assert_respond_to collection, :include?
-      assert collection.include?(obj), msg
+      assert_operator collection, :include?, obj, msg
     end
 
     ##
@@ -443,9 +441,7 @@ module Minitest
     # include_all defaults to false to match Object#respond_to?
 
     def assert_respond_to obj, meth, msg = nil, include_all: false
-      msg = message(msg) {
-        "Expected #{mu_pp obj} (#{obj.class}) to respond to ##{meth}"
-      }
+      msg = message(msg) { "Expected #{mu_pp obj} (#{obj.class}) to respond to ##{meth}" }
       assert obj.respond_to?(meth, include_all), msg
     end
 
@@ -634,8 +630,7 @@ module Minitest
 
     def refute_empty obj, msg = nil
       msg = message(msg) { "Expected #{mu_pp obj} to not be empty" }
-      assert_respond_to obj, :empty?
-      refute obj.empty?, msg
+      refute_predicate obj, :empty?, msg
     end
 
     ##
@@ -672,14 +667,11 @@ module Minitest
     end
 
     ##
-    # Fails if +collection+ includes +obj+.
+    # Fails if +obj+ includes +sub+.
 
-    def refute_includes collection, obj, msg = nil
-      msg = message(msg) {
-        "Expected #{mu_pp collection} to not include #{mu_pp obj}"
-      }
-      assert_respond_to collection, :include?
-      refute collection.include?(obj), msg
+    def refute_includes obj, sub, msg = nil
+      msg = message(msg) { "Expected #{mu_pp obj} to not include #{mu_pp sub}" }
+      refute_operator obj, :include?, sub, msg
     end
 
     ##
@@ -705,9 +697,8 @@ module Minitest
 
     def refute_match matcher, obj, msg = nil
       msg = message(msg) { "Expected #{mu_pp matcher} to not match #{mu_pp obj}" }
-      assert_respond_to matcher, :=~
       matcher = Regexp.new Regexp.escape matcher if String === matcher
-      refute matcher =~ obj, msg
+      refute_operator matcher, :=~, obj, msg
     end
 
     ##
