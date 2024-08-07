@@ -736,25 +736,27 @@ class TestMinitestStub < Minitest::Test
   end
 
   def test_mock_with_yield
+    @assertion_count += 1
+
     mock = Minitest::Mock.new
     mock.expect :write, true do
       true
     end
     rs = nil
 
-    File.stub :open, true, mock do
+    File.stub :open, lambda { |f, m, &b| b[mock]; true } do
       File.open "foo.txt", "r" do |f|
         rs = f.write
       end
     end
     @tc.assert_equal true, rs
+    @tc.assert_mock mock
   end
 
   def test_mock_with_yield_kwargs
-    mock = Minitest::Mock.new
     rs = nil
 
-    File.stub :open, true, mock, kw: 42 do
+    File.stub :open, lambda { |f, m, **kw, &b| b[f, kw: 42]; true } do
       File.open "foo.txt", "r" do |f, kw:|
         rs = kw
       end
@@ -877,11 +879,20 @@ class TestMinitestStub < Minitest::Test
     end
   end
 
-  def test_stub_callable_block_6 # from tenderlove
-    skip_stub6
-
+  def test_stub_callable_block_6 # exactly the same
     @assertion_count += 1
     Foo.stub6 :blocking, Bar.new do
+      @tc.assert_output "hi\n", "" do
+        Foo.blocking do
+          @tc.flunk "shouldn't ever hit this"
+        end
+      end
+    end
+  end
+
+  def test_stub_callable_block_6_2 # exactly the same
+    @assertion_count += 1
+    Foo.stub6_2 :blocking, Bar.new do
       @tc.assert_output "hi\n", "" do
         Foo.blocking do
           @tc.flunk "shouldn't ever hit this"
@@ -911,10 +922,17 @@ class TestMinitestStub < Minitest::Test
     end
   end
 
-  def test_stub_lambda_block_6
-    skip_stub6
-
+  def test_stub_lambda_block_6 # exactly the same
     Thread.stub6 :new, lambda { 21+21 } do
+      result = Thread.new do
+        @tc.flunk "shouldn't ever hit this"
+      end
+      @tc.assert_equal 42, result
+    end
+  end
+
+  def test_stub_lambda_block_6_2 # exactly the same
+    Thread.stub6_2 :new, lambda { 21+21 } do
       result = Thread.new do
         @tc.flunk "shouldn't ever hit this"
       end
@@ -932,9 +950,7 @@ class TestMinitestStub < Minitest::Test
     end
   end
 
-  def test_stub_lambda_block_args_6
-    skip_stub6
-
+  def test_stub_lambda_block_args_6 # exactly the same
     @assertion_count += 1
     Thingy.stub6 :identity, lambda { |y| @tc.assert_equal :nope, y; 21+21 }, :WTF? do
       result = Thingy.identity :nope do |x|
@@ -944,9 +960,7 @@ class TestMinitestStub < Minitest::Test
     end
   end
 
-  def test_stub_lambda_block_args_6_2
-    skip_stub6
-
+  def test_stub_lambda_block_args_6_2 # doesn't support block args at all
     @tc.assert_raises ArgumentError do
       Thingy.stub6_2 :identity, lambda { |y| :__not_run__ }, :WTF? do
         # doesn't matter
@@ -967,13 +981,25 @@ class TestMinitestStub < Minitest::Test
     @tc.assert_equal "woot", io.string
   end
 
-  def test_stub_lambda_block_call_6
-    skip_stub6
-
+  def test_stub_lambda_block_call_6 # slight difference in blk.call
     @assertion_count += 1
     rs = nil
     io = StringIO.new(+"", "w")
-    File.stub6 :open, lambda { |p, m, &blk| blk.call io } do
+    File.stub6 :open, lambda { |p, m, &blk| blk.call io } do # diff--no check on blk
+      File.open "foo.txt", "r" do |f|
+        rs = f.write "woot"
+      end
+    end
+    @tc.assert_equal 4, rs
+    @tc.assert_equal "woot", io.string
+  end
+
+  def test_stub_lambda_block_call_6_2 # slight difference in blk.call
+    @assertion_count += 1
+    rs = nil
+    io = StringIO.new(+"", "w")
+    callable = lambda { |p, m, &blk| blk.call io }
+    File.stub6_2 :open, callable do # diff--no check on blk
       File.open "foo.txt", "r" do |f|
         rs = f.write "woot"
       end
@@ -995,13 +1021,12 @@ class TestMinitestStub < Minitest::Test
     @tc.assert_equal "woot", io.string
   end
 
-  def test_stub_lambda_block_call_args_6
-    skip_stub6
-
+  def test_stub_lambda_block_call_args_6 # slight difference in blk.call
     @assertion_count += 1
     rs = nil
+
     io = StringIO.new(+"", "w")
-    File.stub6(:open, lambda { |p, m, &blk| blk.call io }, :WTF?) do
+    File.stub6(:open, lambda { |p, m, &blk| blk.call io }, :WTF?) do # diff--no check on blk
       File.open "foo.txt", "r" do |f|
         rs = f.write "woot"
       end
@@ -1010,9 +1035,7 @@ class TestMinitestStub < Minitest::Test
     @tc.assert_equal "woot", io.string
   end
 
-  def test_stub_lambda_block_call_args_6_2
-    skip_stub6
-
+  def test_stub_lambda_block_call_args_6_2 # not allowed
     @assertion_count += 2
     rs = nil
     io = StringIO.new(+"", "w")
@@ -1025,6 +1048,19 @@ class TestMinitestStub < Minitest::Test
     end
     @tc.assert_nil rs
     @tc.assert_equal "", io.string
+  end
+
+  def test_stub_lambda_block_call_args_6_2__good
+    @assertion_count += 1
+    rs = nil
+    io = StringIO.new(+"", "w")
+    File.stub6_2(:open, lambda { |p, m, &blk| blk.call io }) do
+      File.open "foo.txt", "r" do |f|
+        rs = f.write "woot"
+      end
+    end
+    @tc.assert_equal 4, rs
+    @tc.assert_equal "woot", io.string
   end
 
   def test_stub_value
@@ -1041,7 +1077,7 @@ class TestMinitestStub < Minitest::Test
     end
   end
 
-  def test_stub_value_block_5
+  def test_stub_value_block_5 # block is called
     @assertion_count += 1
     Thread.stub5 :new, 42 do
       result = Thread.new do
@@ -1051,9 +1087,7 @@ class TestMinitestStub < Minitest::Test
     end
   end
 
-  def test_stub_value_block_6
-    skip_stub6
-
+  def test_stub_value_block_6 # block is skipped
     Thread.stub6 :new, 42 do
       result = Thread.new do
         @tc.flunk "shouldn't hit this"
@@ -1062,7 +1096,16 @@ class TestMinitestStub < Minitest::Test
     end
   end
 
-  def test_stub_value_block_args_5
+  def test_stub_value_block_6_2 # block is skipped
+    Thread.stub6_2 :new, 42 do
+      result = Thread.new do
+        @tc.flunk "shouldn't hit this"
+      end
+      @tc.assert_equal 42, result
+    end
+  end
+
+  def test_stub_value_block_args_5 # allowed and passed
     @assertion_count += 2
     rs = nil
     io = StringIO.new(+"", "w")
@@ -1076,7 +1119,7 @@ class TestMinitestStub < Minitest::Test
     @tc.assert_equal "woot", io.string
   end
 
-  def test_stub_value_block_args_5__break_if_not_passed
+  def test_stub_value_block_args_5__break_if_not_passed # breaks if not passed
     e = @tc.assert_raises NoMethodError do
       File.stub5 :open, :return_value do # intentionally bad setup w/ no args
         File.open "foo.txt", "r" do |f|
@@ -1088,9 +1131,7 @@ class TestMinitestStub < Minitest::Test
     assert_match exp, e.message
   end
 
-  def test_stub_value_block_args_6
-    skip_stub6
-
+  def test_stub_value_block_args_6 # deprecated
     @assertion_count += 2
     rs = nil
     io = StringIO.new(+"", "w")
@@ -1106,9 +1147,7 @@ class TestMinitestStub < Minitest::Test
     @tc.assert_equal "woot", io.string
   end
 
-  def test_stub_value_block_args_6_2
-    skip_stub6
-
+  def test_stub_value_block_args_6_2 # not allowed
     @assertion_count += 2
     rs = nil
     io = StringIO.new(+"", "w")
@@ -1124,24 +1163,25 @@ class TestMinitestStub < Minitest::Test
     @tc.assert_equal "", io.string
   end
 
+  def test_stub_value_block_args_6_2__good
+    @assertion_count += 2
+    result = rs = nil
+    io = StringIO.new(+"", "w")
+
+    callable = lambda { |p, m, &b| b[io]; :value }
+    File.stub6_2 :open, callable do
+      result = File.open "foo.txt", "r" do |f|
+        rs = f.write "woot"
+      end
+      @tc.assert_equal :value, result
+    end
+    @tc.assert_equal 4, rs
+    @tc.assert_equal "woot", io.string
+  end
+
   def assert_deprecated re = /deprecated/
     assert_output "", re do
       yield
     end
-  end
-
-  def skip_stub6
-    skip "not yet" unless STUB6
-  end
-end
-
-STUB6 = ENV["STUB6"]
-
-if STUB6 then
-  require "minitest/mock6" if STUB6
-else
-  class Object
-    alias stub5 stub
-    alias stub6 stub
   end
 end

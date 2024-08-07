@@ -277,9 +277,76 @@ class Object
   # NOTE: keyword args in callables are NOT checked for correctness
   # against the existing method. Too many edge cases to be worth it.
 
-  def stub name, val_or_callable, *block_args, **block_kwargs, &block
-    new_name = "__minitest_stub__#{name}"
+  def stub5 name, val_or_callable, *block_args, **block_kwargs
+    _mt_rename name do |metaclass|
+      metaclass.send :define_method, name do |*args, **kwargs, &blk|
+        if val_or_callable.respond_to? :call then
+          val_or_callable.call(*args, **kwargs, &blk)
+        else
+          blk.call(*block_args, **block_kwargs) if blk
+          val_or_callable
+        end
+      end
 
+      yield self
+    end
+  end
+
+  ##
+  # Alternative stub method to be used in minitest 6, unless we use stub6_2.
+
+  def stub6 name, val_or_callable, *block_args, **block_kwargs
+    _mt_rename name do |metaclass|
+      callable = val_or_callable.respond_to? :call
+      action   = if callable then
+                   val_or_callable
+                 else
+                   lambda { |*a, **kw, &b|
+                     if b && !(block_args.empty? && block_kwargs.empty?) then
+                       warn "deprecated stubbing %s w/ passed args from %s" % [name, block_args, block_kwargs, caller[1]], category: :deprecated
+                       b.call(*block_args, **block_kwargs)
+                     end
+                     val_or_callable
+                   }
+                 end
+
+      metaclass.send :define_method, name do |*args, **kwargs, &blk|
+        action.call(*args, **kwargs, &blk)
+      end
+
+      yield self
+    end
+  end
+
+  ##
+  # An even better alternative stub method to be used in minitest 6.
+  #
+  # Does not allow block_args to be passed. This makes it much cleaner
+  # and more explicit what you want to do. See tests for full details.
+
+  def stub6_2 name, val_or_callable, *block_args, **block_kwargs
+    raise ArgumentError, "stub6 doesn't support block_args" unless
+      block_args.empty?
+    raise ArgumentError, "stub6 doesn't support block_kwargs" unless
+      block_kwargs.empty?
+
+    _mt_rename name do |metaclass|
+      callable = val_or_callable.respond_to? :call
+      action   = if callable then
+                   val_or_callable
+                 else
+                   lambda { |*a, **kw, &b| val_or_callable }
+                 end
+
+      metaclass.send :define_method, name do |*args, **kwargs, &blk|
+        action.call(*args, **kwargs, &blk)
+      end
+
+      yield self
+    end
+  end
+
+  def _mt_rename name # :nodoc:
     metaclass = class << self; self; end
 
     if respond_to? name and not methods.map(&:to_s).include? name.to_s then
@@ -288,42 +355,16 @@ class Object
       end
     end
 
+    new_name = "__minitest_stub__#{name}"
+
     metaclass.send :alias_method, new_name, name
 
-    if ENV["MT_KWARGS_HAC\K"] then
-      metaclass.send :define_method, name do |*args, &blk|
-        if val_or_callable.respond_to? :call then
-          val_or_callable.call(*args, &blk)
-        else
-          blk.call(*block_args, **block_kwargs) if blk
-          val_or_callable
-        end
-      end
-    else
-      metaclass.send :define_method, name do |*args, **kwargs, &blk|
-        if val_or_callable.respond_to? :call then
-          if kwargs.empty? then # FIX: drop this after 2.7 dead
-            val_or_callable.call(*args, &blk)
-          else
-            val_or_callable.call(*args, **kwargs, &blk)
-          end
-        else
-          if blk then
-            if block_kwargs.empty? then # FIX: drop this after 2.7 dead
-              blk.call(*block_args)
-            else
-              blk.call(*block_args, **block_kwargs)
-            end
-          end
-          val_or_callable
-        end
-      end
-    end
-
-    block[self]
+    yield metaclass
   ensure
     metaclass.send :undef_method, name
     metaclass.send :alias_method, name, new_name
     metaclass.send :undef_method, new_name
   end
+
+  alias stub stub5 # HACK graduate to 6_2
 end
