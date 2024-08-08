@@ -14,7 +14,7 @@ Hoe.spec "minitest" do
 
   license "MIT"
 
-  require_ruby_version [">= 2.6", "< 4.0"]
+  require_ruby_version "~> 3.0"
 
   dependency "path_expander", "~> 1.0"
 
