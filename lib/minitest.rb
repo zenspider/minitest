@@ -99,6 +99,17 @@ module Minitest
   end
 
   ##
+  # Manually load plugins by name.
+
+  def self.load *names
+    names.each do |name|
+      require "minitest/#{name}_plugin"
+
+      self.extensions << name.to_s
+    end
+  end
+
+  ##
   # Register a plugin to be used. Does NOT require / load it.
 
   def self.register_plugin name_or_mod
@@ -146,6 +157,8 @@ module Minitest
               }
     orig_args = args.dup
 
+    warn "--no-plugins is a no-op" if args.delete "--no-plugins" # TODO: remove me! when?
+
     OptionParser.new do |opts|
       opts.banner  = "minitest options:"
       opts.version = Minitest::VERSION
@@ -154,8 +167,6 @@ module Minitest
         puts opts
         exit
       end
-
-      opts.on "--no-plugins", "Bypass minitest plugin auto-loading (or set $MT_NO_PLUGINS)."
 
       desc = "Sets random seed. Also via env. Eg: SEED=n rake"
       opts.on "-s", "--seed SEED", Integer, desc do |m|
@@ -251,9 +262,9 @@ module Minitest
   #
   # The overall structure of a run looks like this:
   #
+  #   [Minitest.load_plugins] optional, called by user, or require what you want
   #   Minitest.autorun
   #     Minitest.run(args)
-  #       Minitest.load_plugins
   #       Minitest.process_args
   #       Minitest.init_plugins
   #       Minitest.__run(reporter, options)
@@ -266,8 +277,6 @@ module Minitest
   #                   runnable_klass.new(runnable_method).run
 
   def self.run args = []
-    self.load_plugins unless args.delete("--no-plugins") || ENV["MT_NO_PLUGINS"]
-
     options = process_args args
 
     Minitest.seed = options[:seed]
