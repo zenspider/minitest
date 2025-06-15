@@ -127,11 +127,54 @@ class TestMinitestBenchmark < Minitest::Test
     assert_in_delta exp_a, a
     assert_in_delta exp_b, b
   end
-end
 
-describe "my class Bench" do
-  klass = self
-  it "should provide bench methods" do
-    klass.must_respond_to :bench
+  def test_validation_for_fit
+    skip "not yet"
+  end
+
+  def test_assert_performance
+    skip "not yet"
+  end
+
+  def test_assert_performance_constant
+    skip "not yet"
+  end
+
+  def test_assert_performance_exponential
+    skip "not yet"
+  end
+
+  def test_assert_performance_logarithmic
+    skip "not yet"
+  end
+
+  def test_assert_performance_linear
+    skip "not yet"
+  end
+
+  def test_assert_performance_power
+    skip "not yet"
   end
 end
+
+describe "my class tests" do
+  it "should provide bench methods" do
+    cls = describe "blah Bench" do end
+    _(cls.superclass).must_equal Minitest::BenchSpec
+    _(cls).must_respond_to :bench
+  end
+end
+
+# class TestMyClassBench < Minitest::Benchmark
+#   def bench_algorithm_performance_cls
+#     assert_performance_constant 0.999999 do |n|
+#       "xxx" * n * n
+#     end
+#   end
+# end
+#
+# describe "my class Bench" do
+#   bench_performance_constant :algorithm_performance_spc, 0.999999 do |n|
+#     "xxx" # * n * n
+#   end
+# end

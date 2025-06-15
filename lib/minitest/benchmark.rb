@@ -17,7 +17,7 @@ module Minitest
       self.class.io
     end
 
-    def self.run reporter, options = {} # :nodoc:
+    def Benchmark.run_suite reporter, options = {} # :nodoc:
       @io = reporter.io
       super
     end
@@ -81,7 +81,7 @@ module Minitest
     def assert_performance validation, &work
       range = self.class.bench_range
 
-      io.print self.name
+      io.print "#{self.name}"
 
       times = []
 
@@ -107,8 +107,9 @@ module Minitest
     # is applied against the slope itself. As such, you probably want
     # to tighten it from the default.
     #
-    # See https://www.graphpad.com/guides/prism/8/curve-fitting/reg_intepretingnonlinr2.htm
-    # for more details.
+    # https://web.archive.org/web/20070125122334/http://www.graphpad.com/curvefit/goodness_of_fit.htm
+    # See http://www.graphpad.com/curvefit/goodness_of_fit.htm for
+    # more details.
     #
     # Fit is calculated by #fit_linear.
     #
@@ -132,85 +133,85 @@ module Minitest
       assert_performance validation, &work
     end
 
-    ##
-    # Runs the given +work+ and asserts that the times gathered fit to
-    # match a exponential curve within a given error +threshold+.
+    # ##
+    # # Runs the given +work+ and asserts that the times gathered fit to
+    # # match a exponential curve within a given error +threshold+.
+    # #
+    # # Fit is calculated by #fit_exponential.
+    # #
+    # # Ranges are specified by ::bench_range.
+    # #
+    # # Eg:
+    # #
+    # #   def bench_algorithm
+    # #     assert_performance_exponential 0.9999 do |n|
+    # #       @obj.algorithm(n)
+    # #     end
+    # #   end
     #
-    # Fit is calculated by #fit_exponential.
+    # def assert_performance_exponential threshold = 0.99, &work
+    #   assert_performance validation_for_fit(:exponential, threshold), &work
+    # end
     #
-    # Ranges are specified by ::bench_range.
+    # ##
+    # # Runs the given +work+ and asserts that the times gathered fit to
+    # # match a logarithmic curve within a given error +threshold+.
+    # #
+    # # Fit is calculated by #fit_logarithmic.
+    # #
+    # # Ranges are specified by ::bench_range.
+    # #
+    # # Eg:
+    # #
+    # #   def bench_algorithm
+    # #     assert_performance_logarithmic 0.9999 do |n|
+    # #       @obj.algorithm(n)
+    # #     end
+    # #   end
     #
-    # Eg:
+    # def assert_performance_logarithmic threshold = 0.99, &work
+    #   assert_performance validation_for_fit(:logarithmic, threshold), &work
+    # end
     #
-    #   def bench_algorithm
-    #     assert_performance_exponential 0.9999 do |n|
-    #       @obj.algorithm(n)
-    #     end
-    #   end
-
-    def assert_performance_exponential threshold = 0.99, &work
-      assert_performance validation_for_fit(:exponential, threshold), &work
-    end
-
-    ##
-    # Runs the given +work+ and asserts that the times gathered fit to
-    # match a logarithmic curve within a given error +threshold+.
+    # ##
+    # # Runs the given +work+ and asserts that the times gathered fit to
+    # # match a straight line within a given error +threshold+.
+    # #
+    # # Fit is calculated by #fit_linear.
+    # #
+    # # Ranges are specified by ::bench_range.
+    # #
+    # # Eg:
+    # #
+    # #   def bench_algorithm
+    # #     assert_performance_linear 0.9999 do |n|
+    # #       @obj.algorithm(n)
+    # #     end
+    # #   end
     #
-    # Fit is calculated by #fit_logarithmic.
+    # def assert_performance_linear threshold = 0.99, &work
+    #   assert_performance validation_for_fit(:linear, threshold), &work
+    # end
     #
-    # Ranges are specified by ::bench_range.
+    # ##
+    # # Runs the given +work+ and asserts that the times gathered curve
+    # # fit to match a power curve within a given error +threshold+.
+    # #
+    # # Fit is calculated by #fit_power.
+    # #
+    # # Ranges are specified by ::bench_range.
+    # #
+    # # Eg:
+    # #
+    # #   def bench_algorithm
+    # #     assert_performance_power 0.9999 do |x|
+    # #       @obj.algorithm
+    # #     end
+    # #   end
     #
-    # Eg:
-    #
-    #   def bench_algorithm
-    #     assert_performance_logarithmic 0.9999 do |n|
-    #       @obj.algorithm(n)
-    #     end
-    #   end
-
-    def assert_performance_logarithmic threshold = 0.99, &work
-      assert_performance validation_for_fit(:logarithmic, threshold), &work
-    end
-
-    ##
-    # Runs the given +work+ and asserts that the times gathered fit to
-    # match a straight line within a given error +threshold+.
-    #
-    # Fit is calculated by #fit_linear.
-    #
-    # Ranges are specified by ::bench_range.
-    #
-    # Eg:
-    #
-    #   def bench_algorithm
-    #     assert_performance_linear 0.9999 do |n|
-    #       @obj.algorithm(n)
-    #     end
-    #   end
-
-    def assert_performance_linear threshold = 0.99, &work
-      assert_performance validation_for_fit(:linear, threshold), &work
-    end
-
-    ##
-    # Runs the given +work+ and asserts that the times gathered curve
-    # fit to match a power curve within a given error +threshold+.
-    #
-    # Fit is calculated by #fit_power.
-    #
-    # Ranges are specified by ::bench_range.
-    #
-    # Eg:
-    #
-    #   def bench_algorithm
-    #     assert_performance_power 0.9999 do |x|
-    #       @obj.algorithm
-    #     end
-    #   end
-
-    def assert_performance_power threshold = 0.99, &work
-      assert_performance validation_for_fit(:power, threshold), &work
-    end
+    # def assert_performance_power threshold = 0.99, &work
+    #   assert_performance validation_for_fit(:power, threshold), &work
+    # end
 
     ##
     # Takes an array of x/y pairs and calculates the general R^2 value.
@@ -324,17 +325,17 @@ module Minitest
       enum.sum
     end
 
-    ##
-    # Returns a proc that calls the specified fit method and asserts
-    # that the error is within a tolerable threshold.
-
-    def validation_for_fit msg, threshold
-      proc do |range, times|
-        a, b, rr = send "fit_#{msg}", range, times
-        assert_operator rr, :>=, threshold
-        [a, b, rr]
-      end
-    end
+    # ##
+    # # Returns a proc that calls the specified fit method and asserts
+    # # that the error is within a tolerable threshold.
+    #
+    # def validation_for_fit msg, threshold
+    #   proc do |range, times|
+    #     a, b, rr = send "fit_#{msg}", range, times
+    #     assert_operator rr, :>=, threshold
+    #     [a, b, rr]
+    #   end
+    # end
   end
 end
 
@@ -353,39 +354,39 @@ module Minitest
     # See ::bench_performance_linear for an example of how to use this.
 
     def self.bench name, &block
-      define_method "bench_#{name.gsub(/\W+/, "_")}", &block
+      define_method "bench_#{name.to_s.gsub(/\W+/, "_")}", &block
     end
 
-    ##
-    # Specifies the ranges used for benchmarking for that class.
+    # ##
+    # # Specifies the ranges used for benchmarking for that class.
+    # #
+    # #   bench_range do
+    # #     bench_exp(2, 16, 2)
+    # #   end
+    # #
+    # # See Minitest::Benchmark#bench_range for more details.
     #
-    #   bench_range do
-    #     bench_exp(2, 16, 2)
+    # def self.bench_range &block
+    #   return super unless block
+    #
+    #   meta = (class << self; self; end)
+    #   meta.send :define_method, "bench_range", &block
+    # end
+    #
+    # ##
+    # # Create a benchmark that verifies that the performance is linear.
+    # #
+    # #   describe "my class Bench" do
+    # #     bench_performance_linear "fast_algorithm", 0.9999 do |n|
+    # #       @obj.fast_algorithm(n)
+    # #     end
+    # #   end
+    #
+    # def self.bench_performance_linear name, threshold = 0.99, &work
+    #   bench name do
+    #     assert_performance_linear threshold, &work
     #   end
-    #
-    # See Minitest::Benchmark#bench_range for more details.
-
-    def self.bench_range &block
-      return super unless block
-
-      meta = (class << self; self; end)
-      meta.send :define_method, "bench_range", &block
-    end
-
-    ##
-    # Create a benchmark that verifies that the performance is linear.
-    #
-    #   describe "my class Bench" do
-    #     bench_performance_linear "fast_algorithm", 0.9999 do |n|
-    #       @obj.fast_algorithm(n)
-    #     end
-    #   end
-
-    def self.bench_performance_linear name, threshold = 0.99, &work
-      bench name do
-        assert_performance_linear threshold, &work
-      end
-    end
+    # end
 
     ##
     # Create a benchmark that verifies that the performance is constant.
@@ -402,50 +403,51 @@ module Minitest
       end
     end
 
-    ##
-    # Create a benchmark that verifies that the performance is exponential.
+    # ##
+    # # Create a benchmark that verifies that the performance is exponential.
+    # #
+    # #   describe "my class Bench" do
+    # #     bench_performance_exponential "algorithm" do |n|
+    # #       @obj.algorithm(n)
+    # #     end
+    # #   end
     #
-    #   describe "my class Bench" do
-    #     bench_performance_exponential "algorithm" do |n|
-    #       @obj.algorithm(n)
-    #     end
+    # def self.bench_performance_exponential name, threshold = 0.99, &work
+    #   bench name do
+    #     assert_performance_exponential threshold, &work
     #   end
-
-    def self.bench_performance_exponential name, threshold = 0.99, &work
-      bench name do
-        assert_performance_exponential threshold, &work
-      end
-    end
-
-    ##
-    # Create a benchmark that verifies that the performance is logarithmic.
+    # end
     #
-    #   describe "my class Bench" do
-    #     bench_performance_logarithmic "algorithm" do |n|
-    #       @obj.algorithm(n)
-    #     end
-    #   end
-
-    def self.bench_performance_logarithmic name, threshold = 0.99, &work
-      bench name do
-        assert_performance_logarithmic threshold, &work
-      end
-    end
-
-    ##
-    # Create a benchmark that verifies that the performance is power.
     #
-    #   describe "my class Bench" do
-    #     bench_performance_power "algorithm" do |n|
-    #       @obj.algorithm(n)
-    #     end
+    # ##
+    # # Create a benchmark that verifies that the performance is logarithmic.
+    # #
+    # #   describe "my class Bench" do
+    # #     bench_performance_logarithmic "algorithm" do |n|
+    # #       @obj.algorithm(n)
+    # #     end
+    # #   end
+    #
+    # def self.bench_performance_logarithmic name, threshold = 0.99, &work
+    #   bench name do
+    #     assert_performance_logarithmic threshold, &work
     #   end
-
-    def self.bench_performance_power name, threshold = 0.99, &work
-      bench name do
-        assert_performance_power threshold, &work
-      end
-    end
+    # end
+    #
+    # ##
+    # # Create a benchmark that verifies that the performance is power.
+    # #
+    # #   describe "my class Bench" do
+    # #     bench_performance_power "algorithm" do |n|
+    # #       @obj.algorithm(n)
+    # #     end
+    # #   end
+    #
+    # def self.bench_performance_power name, threshold = 0.99, &work
+    #   bench name do
+    #     assert_performance_power threshold, &work
+    #   end
+    # end
   end
 
   Minitest::Spec.register_spec_type(/Bench(mark)?$/, Minitest::BenchSpec)
