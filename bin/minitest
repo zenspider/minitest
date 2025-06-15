@@ -1,0 +1,12 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift "/Users/ryan/Work/p4/zss/src/path_expander/dev/lib"
+$LOAD_PATH.unshift "test"
+$LOAD_PATH.unshift "lib"
+
+require "minitest/autorun"
+require "minitest/sprint"
+
+Minitest::Sprint::PathExpander.new.process.each do |f|
+  require "./#{f}"
+end

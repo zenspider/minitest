@@ -6,12 +6,16 @@ $:.unshift "lib" # to pick up lib/minitest/test_task.rb when minitest not instal
 Hoe.plugin :seattlerb
 Hoe.plugin :rdoc
 
+Hoe.add_include_dirs "../../path_expander/dev/lib"
+
 Hoe.spec "minitest" do
   developer "Ryan Davis", "ryand-ruby@zenspider.com"
 
   license "MIT"
 
   require_ruby_version ">= 2.7"
+
+  dependency "path_expander", "~> 1.0"
 end
 
 desc "Find missing expectations"
