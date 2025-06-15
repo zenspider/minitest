@@ -16,6 +16,23 @@ Hoe.spec "minitest" do
   require_ruby_version ">= 3.3"
 
   dependency "path_expander", "~> 1.0"
+
+  ## TODO: uncomment this on the last point release on 5.x
+  #
+  #   self.post_install_message = <<-"EOM"
+  # NOTE: minitest 5 will be the last in the minitest family to support
+  #       ruby 1.8, 1.9, and 2.x. If you need to keep using these
+  #       versions, you need to pin your dependency to minitest with
+  #       something like "~> 5.0".
+  #
+  #       Further, minitest 6 will be dropping the following:
+  #
+  #       + MiniTest (it's been Minitest for *years*)
+  #       + MiniTest::Unit
+  #       + MiniTest::Unit::TestCase
+  #       + assert_send (unless you argue for it well)
+  #       + assert_equal nil, obj
+  #   EOM
 end
 
 desc "Find missing expectations"
