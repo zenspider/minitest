@@ -33,8 +33,7 @@ module Minitest
 
   cattr_accessor :parallel_executor
 
-  warn "DEPRECATED: use MT_CPU instead of N for parallel test runs" if ENV["N"] && ENV["N"].to_i > 0
-  n_threads = (ENV["MT_CPU"] || ENV["N"] || Etc.nprocessors).to_i
+  n_threads = (ENV["MT_CPU"] || Etc.nprocessors).to_i
 
   self.parallel_executor = Parallel::Executor.new n_threads
 
@@ -185,12 +184,20 @@ module Minitest
         options[:show_skips] = true
       end
 
-      opts.on "-n", "--name PATTERN", "Filter run on /regexp/ or string." do |a|
-        options[:filter] = a # TODO: rename include?
+      opts.on "-i", "--include PATTERN", "Filter run on /regexp/ or string." do |a|
+        options[:include] = a
       end
 
       opts.on "-e", "--exclude PATTERN", "Exclude /regexp/ or string from run." do |a|
         options[:exclude] = a
+      end
+
+      opts.on "-n", "--name PATTERN", "Alias for --include" do |a|
+        options[:include] = a
+      end
+
+      opts.on "--hard-mode", "Run tests in 'hard mode', aka fully random." do
+        options[:hard_mode] = true
       end
 
       opts.on "-S", "--skip CODES", String, "Skip reporting of certain types of results (eg E)." do |s|
@@ -309,7 +316,7 @@ module Minitest
   end
 
   def self.empty_run! options # :nodoc:
-    filter = options[:filter]
+    filter = options[:include]
     return true unless filter # no filter, but nothing ran == success
 
     warn "Nothing ran for filter: %s" % [filter]
@@ -337,7 +344,20 @@ module Minitest
     # the serial tests won't lock around Reporter#record. Run the serial tests
     # first, so that after they complete, the parallel tests will lock when
     # recording results.
-    serial.map { |suite| suite.run_suite reporter, options } +
+
+    # serial.map { |suite| suite.run_suite reporter, options } +
+    #   parallel.map { |suite| suite.run_suite reporter, options }
+
+    if options[:hard_mode] then
+      serial
+        .flat_map { |suite|
+          suite.filter_runnable_methods(options).map { |m| [suite, m] }
+        }
+        .shuffle
+        .map { |(suite, method_name)| suite.run suite, method_name, reporter }
+    else
+      serial.map { |suite| suite.run_suite reporter, options }
+    end +
       parallel.map { |suite| suite.run_suite reporter, options }
   end
 
@@ -407,16 +427,17 @@ module Minitest
 
     ##
     # Returns an array of filtered +runnable_methods+. Uses
-    # options[:filter] (--name arguments) and options[:exclude]
+    # options[:include] (--include arguments) and options[:exclude]
     # (--exclude arguments) values to filter.
 
-    def self.filter_runnable_methods options
-      pos = options[:filter]
+    def self.filter_runnable_methods options={}
+      pos = options[:include]
       neg = options[:exclude]
 
       pos = Regexp.new $1 if pos.kind_of?(String) && pos =~ %r%/(.*)/%
       neg = Regexp.new $1 if neg.kind_of?(String) && neg =~ %r%/(.*)/%
 
+      # at most 1-2% slower than a 1-pass version, stop optimizing this
       self.runnable_methods
         .select { |m| !pos ||  pos === m || pos === "#{self}##{m}"  }
         .reject { |m|  neg && (neg === m || neg === "#{self}##{m}") }

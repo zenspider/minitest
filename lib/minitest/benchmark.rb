@@ -17,7 +17,7 @@ module Minitest
       self.class.io
     end
 
-    def self.run reporter, options = {} # :nodoc:
+    def Benchmark.run_suite reporter, options = {} # :nodoc:
       @io = reporter.io
       super
     end
@@ -60,78 +60,80 @@ module Minitest
       bench_exp 1, 10_000
     end
 
-    # ##
-    # # Runs the given +work+, gathering the times of each run. Range
-    # # and times are then passed to a given +validation+ proc. Outputs
-    # # the benchmark name and times in tab-separated format, making it
-    # # easy to paste into a spreadsheet for graphing or further
-    # # analysis.
-    # #
-    # # Ranges are specified by ::bench_range.
-    # #
-    # # Eg:
-    # #
-    # #   def bench_algorithm
-    # #     validation = proc { |x, y| ... }
-    # #     assert_performance validation do |n|
-    # #       @obj.algorithm(n)
-    # #     end
-    # #   end
+    ##
+    # Runs the given +work+, gathering the times of each run. Range
+    # and times are then passed to a given +validation+ proc. Outputs
+    # the benchmark name and times in tab-separated format, making it
+    # easy to paste into a spreadsheet for graphing or further
+    # analysis.
     #
-    # def assert_performance validation, &work
-    #   range = self.class.bench_range
+    # Ranges are specified by ::bench_range.
     #
-    #   io.print "#{self.name}"
+    # Eg:
     #
-    #   times = []
-    #
-    #   range.each do |x|
-    #     GC.start
-    #     t0 = Minitest.clock_time
-    #     instance_exec(x, &work)
-    #     t = Minitest.clock_time - t0
-    #
-    #     io.print "\t%9.6f" % t
-    #     times << t
+    #   def bench_algorithm
+    #     validation = proc { |x, y| ... }
+    #     assert_performance validation do |n|
+    #       @obj.algorithm(n)
+    #     end
     #   end
-    #   io.puts
+
+    def assert_performance validation, &work
+      range = self.class.bench_range
+
+      io.print "#{self.name}"
+
+      times = []
+
+      range.each do |x|
+        GC.start
+        t0 = Minitest.clock_time
+        instance_exec(x, &work)
+        t = Minitest.clock_time - t0
+
+        io.print "\t%9.6f" % t
+        times << t
+      end
+      io.puts
+
+      validation[range, times]
+    end
+
+    ##
+    # Runs the given +work+ and asserts that the times gathered fit to
+    # match a constant rate (eg, linear slope == 0) within a given
+    # +threshold+. Note: because we're testing for a slope of 0, R^2
+    # is not a good determining factor for the fit, so the threshold
+    # is applied against the slope itself. As such, you probably want
+    # to tighten it from the default.
     #
-    #   validation[range, times]
-    # end
+    # https://web.archive.org/web/20070125122334/http://www.graphpad.com/curvefit/goodness_of_fit.htm
+    # See http://www.graphpad.com/curvefit/goodness_of_fit.htm for
+    # more details.
     #
-    # ##
-    # # Runs the given +work+ and asserts that the times gathered fit to
-    # # match a constant rate (eg, linear slope == 0) within a given
-    # # +threshold+. Note: because we're testing for a slope of 0, R^2
-    # # is not a good determining factor for the fit, so the threshold
-    # # is applied against the slope itself. As such, you probably want
-    # # to tighten it from the default.
-    # #
-    # # See http://www.graphpad.com/curvefit/goodness_of_fit.htm for
-    # # more details.
-    # #
-    # # Fit is calculated by #fit_linear.
-    # #
-    # # Ranges are specified by ::bench_range.
-    # #
-    # # Eg:
-    # #
-    # #   def bench_algorithm
-    # #     assert_performance_constant 0.9999 do |n|
-    # #       @obj.algorithm(n)
-    # #     end
-    # #   end
+    # Fit is calculated by #fit_linear.
     #
-    # def assert_performance_constant threshold = 0.99, &work
-    #   validation = proc do |range, times|
-    #     a, b, rr = fit_linear range, times
-    #     assert_in_delta 0, b, 1 - threshold
-    #     [a, b, rr]
+    # Ranges are specified by ::bench_range.
+    #
+    # Eg:
+    #
+    #   def bench_algorithm
+    #     assert_performance_constant 0.9999 do |n|
+    #       @obj.algorithm(n)
+    #     end
     #   end
-    #
-    #   assert_performance validation, &work
-    # end
-    #
+
+    def assert_performance_constant threshold = 0.99, &work
+      validation = proc do |range, times|
+        a, b, rr = fit_linear range, times
+pp [a, b, rr]
+        assert_in_delta 0, b, 1 - threshold
+        [a, b, rr]
+      end
+
+      assert_performance validation, &work
+    end
+
     # ##
     # # Runs the given +work+ and asserts that the times gathered fit to
     # # match a exponential curve within a given error +threshold+.
@@ -345,17 +347,17 @@ module Minitest
   class BenchSpec < Benchmark
     extend Minitest::Spec::DSL
 
-    # ##
-    # # This is used to define a new benchmark method. You usually don't
-    # # use this directly and is intended for those needing to write new
-    # # performance curve fits (eg: you need a specific polynomial fit).
-    # #
-    # # See ::bench_performance_linear for an example of how to use this.
+    ##
+    # This is used to define a new benchmark method. You usually don't
+    # use this directly and is intended for those needing to write new
+    # performance curve fits (eg: you need a specific polynomial fit).
     #
-    # def self.bench name, &block
-    #   define_method "bench_#{name.gsub(/\W+/, "_")}", &block
-    # end
-    #
+    # See ::bench_performance_linear for an example of how to use this.
+
+    def self.bench name, &block
+      define_method "bench_#{name.to_s.gsub(/\W+/, "_")}", &block
+    end
+
     # ##
     # # Specifies the ranges used for benchmarking for that class.
     # #
@@ -386,22 +388,22 @@ module Minitest
     #     assert_performance_linear threshold, &work
     #   end
     # end
+
+    ##
+    # Create a benchmark that verifies that the performance is constant.
     #
-    # ##
-    # # Create a benchmark that verifies that the performance is constant.
-    # #
-    # #   describe "my class Bench" do
-    # #     bench_performance_constant "zoom_algorithm!" do |n|
-    # #       @obj.zoom_algorithm!(n)
-    # #     end
-    # #   end
-    #
-    # def self.bench_performance_constant name, threshold = 0.99, &work
-    #   bench name do
-    #     assert_performance_constant threshold, &work
+    #   describe "my class Bench" do
+    #     bench_performance_constant "zoom_algorithm!" do |n|
+    #       @obj.zoom_algorithm!(n)
+    #     end
     #   end
-    # end
-    #
+
+    def self.bench_performance_constant name, threshold = 0.99, &work
+      bench name do
+        assert_performance_constant threshold, &work
+      end
+    end
+
     # ##
     # # Create a benchmark that verifies that the performance is exponential.
     # #

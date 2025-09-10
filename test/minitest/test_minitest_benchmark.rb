@@ -157,37 +157,24 @@ class TestMinitestBenchmark < Minitest::Test
   end
 end
 
-describe "my class Bench" do # FIX: these don't actually run?!?
-  klass = self
+describe "my class tests" do
   it "should provide bench methods" do
-    klass.must_respond_to :bench
-  end
-
-  def test_bench
-    skip "not yet"
-  end
-
-  def test_bench_range
-    skip "not yet"
-  end
-
-  def test_bench_performance_linear
-    skip "not yet"
-  end
-
-  def test_bench_performance_constant
-    skip "not yet"
-  end
-
-  def test_bench_performance_exponential
-    skip "not yet"
-  end
-
-  def test_bench_performance_logarithmic
-    skip "not yet"
-  end
-
-  def test_bench_performance_power
-    skip "not yet"
+    cls = describe "blah Bench" do end
+    _(cls.superclass).must_equal Minitest::BenchSpec
+    _(cls).must_respond_to :bench
   end
 end
+
+# class TestMyClassBench < Minitest::Benchmark
+#   def bench_algorithm_performance_cls
+#     assert_performance_constant 0.999999 do |n|
+#       "xxx" * n * n
+#     end
+#   end
+# end
+#
+# describe "my class Bench" do
+#   bench_performance_constant :algorithm_performance_spc, 0.999999 do |n|
+#     "xxx" # * n * n
+#   end
+# end

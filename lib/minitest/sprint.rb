@@ -5,11 +5,24 @@ require "minitest"
 # Command line runner class for minitest.
 
 class Minitest::Sprint
+
+  require "minitest/autorun"
+  require "minitest/path_expander"
+
+  $LOAD_PATH.unshift "test"
+  $LOAD_PATH.unshift "lib"
+
+  def self.run args = ARGV
+    Minitest::Sprint::PathExpander.new(args).process.each do |f|
+      require "./#{f}"
+    end
+  end
+
   ##
   # Minitest's PathExpander to find and filter tests.
 
   class PathExpander < ::PathExpander
-    TEST_GLOB = "**/{test_*,*_test,spec_*,*_spec}.rb" # :nodoc:
+    TEST_GLOB = "{test,spec}/{test_*,*_test,spec_*,*_spec}.rb" # :nodoc:
 
     def initialize args = ARGV # :nodoc:
       args << "test" if args.empty?
