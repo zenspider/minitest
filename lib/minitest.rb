@@ -196,6 +196,10 @@ module Minitest
         options[:include] = a
       end
 
+      opts.on "--hard-mode", "Run tests in 'hard mode', aka fully random." do
+        options[:hard_mode] = true
+      end
+
       opts.on "-S", "--skip CODES", String, "Skip reporting of certain types of results (eg E)." do |s|
         options[:skip] = s.chars.to_a
       end
@@ -340,7 +344,16 @@ module Minitest
     # the serial tests won't lock around Reporter#record. Run the serial tests
     # first, so that after they complete, the parallel tests will lock when
     # recording results.
-    serial.map { |suite| suite.run_suite reporter, options } +
+    if options[:hard_mode] then
+      serial
+        .flat_map { |suite|
+          suite.filter_runnable_methods(options).map { |m| [suite, m] }
+        }
+        .shuffle
+        .map { |(suite, method_name)| suite.run suite, method_name, reporter }
+    else
+      serial.map { |suite| suite.run_suite reporter, options }
+    end +
       parallel.map { |suite| suite.run_suite reporter, options }
   end
 
