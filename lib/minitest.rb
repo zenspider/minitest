@@ -190,8 +190,8 @@ module Minitest
         options[:show_skips] = true
       end
 
-      opts.on "-n", "--name PATTERN", "Include /regexp/ or string for run." do |a|
-        options[:filter] = a
+      opts.on "-i", "--include PATTERN", "Include /regexp/ or string for run." do |a|
+        options[:include] = a
       end
 
       opts.on "-e", "--exclude PATTERN", "Exclude /regexp/ or string from run." do |a|
@@ -199,13 +199,13 @@ module Minitest
       end
 
       # omg wtf
-      def opts.short_alias(from, to) = top.short[to] = top.short[from]
-      def opts.long_alias(from, to)  = top.long[to]  = top.long[from]
+      def opts.short_alias(new, old) = top.short[new] = top.short[old]
+      def opts.long_alias (new, old) = top.long[new]  = top.long[old]
 
       # these will work but won't show up in --help output:
       opts.long_alias  "name", "include"
-      opts.short_alias "n",       "i"
-      opts.short_alias "e",       "x"
+      opts.short_alias "n",    "i"
+      opts.short_alias "x",    "e"
 
       opts.on "-S", "--skip CODES", String, "Skip reporting of certain types of results (eg E)." do |s|
         options[:skip] = s.chars.to_a
@@ -323,7 +323,7 @@ module Minitest
   end
 
   def self.empty_run! options # :nodoc:
-    filter = options[:filter]
+    filter = options[:include]
     return true unless filter # no filter, but nothing ran == success
 
     warn "Nothing ran for filter: %s" % [filter]
@@ -421,11 +421,11 @@ module Minitest
 
     ##
     # Returns an array of filtered +runnable_methods+. Uses
-    # options[:filter] (--name arguments) and options[:exclude]
+    # options[:include] (--include arguments) and options[:exclude]
     # (--exclude arguments) values to filter.
 
-    def self.filter_runnable_methods options
-      pos = options[:filter]
+    def self.filter_runnable_methods options={}
+      pos = options[:include]
       neg = options[:exclude]
 
       pos = Regexp.new $1 if pos.kind_of?(String) && pos =~ %r%/(.*)/%
