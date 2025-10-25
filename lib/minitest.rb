@@ -184,12 +184,16 @@ module Minitest
         options[:show_skips] = true
       end
 
-      opts.on "-n", "--name PATTERN", "Filter run on /regexp/ or string." do |a|
-        options[:filter] = a
+      opts.on "-i", "--include PATTERN", "Filter run on /regexp/ or string." do |a|
+        options[:include] = a
       end
 
       opts.on "-e", "--exclude PATTERN", "Exclude /regexp/ or string from run." do |a|
         options[:exclude] = a
+      end
+
+      opts.on "-n", "--name PATTERN", "Alias for --include" do |a|
+        options[:include] = a
       end
 
       opts.on "-S", "--skip CODES", String, "Skip reporting of certain types of results (eg E)." do |s|
@@ -308,7 +312,7 @@ module Minitest
   end
 
   def self.empty_run! options # :nodoc:
-    filter = options[:filter]
+    filter = options[:include]
     return true unless filter # no filter, but nothing ran == success
 
     warn "Nothing ran for filter: %s" % [filter]
@@ -406,11 +410,11 @@ module Minitest
 
     ##
     # Returns an array of filtered +runnable_methods+. Uses
-    # options[:filter] (--name arguments) and options[:exclude]
+    # options[:include] (--include arguments) and options[:exclude]
     # (--exclude arguments) values to filter.
 
-    def self.filter_runnable_methods options
-      pos = options[:filter]
+    def self.filter_runnable_methods options={}
+      pos = options[:include]
       neg = options[:exclude]
 
       pos = Regexp.new $1 if pos.kind_of?(String) && pos =~ %r%/(.*)/%
