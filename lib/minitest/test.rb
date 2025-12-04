@@ -1,3 +1,4 @@
+raise "what?? no!?!?" unless defined? Minitest::Runnable
 require_relative "../minitest" unless defined? Minitest::Runnable
 
 module Minitest
